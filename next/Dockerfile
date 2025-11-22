@@ -1,34 +1,25 @@
-FROM node:lts as build
+FROM node:22 AS builder
 
 WORKDIR /app
 
 COPY . .
 
+RUN corepack enable
+RUN yes | yarn set version stable
 RUN yarn install
 RUN yarn build
 
 
-FROM node:lts
+FROM node:22-slim
 
 WORKDIR /app
 
-# uncomment if using standalone builds
-# COPY --from=build /app/.next/standalone ./
-# COPY --from=build /app/.next/static ./.next/static
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
 
-# for non-standalone builds
-COPY --from=build /app/.next ./.next
-
-COPY --from=build /app/public ./public
-COPY --from=build /app/node_modules ./node_modules
-COPY package.json ./package.json
-
-ENV NEXT_TELEMETRY_DISABLED 1
+ENV NEXT_TELEMETRY_DISABLED=1
 
 EXPOSE 3000
 
-# uncomment if using standalone builds
-# CMD ["node", "server.js"]
-
-# for non-standalone builds
-CMD ["next", "start"]
+CMD ["server.js"]
