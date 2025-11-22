@@ -1,17 +1,15 @@
-FROM golang:1.21 as build
+FROM golang:1.25 as build
 
 WORKDIR /go/src/app
 
 COPY . .
 
 RUN go mod download
-RUN CGO_ENABLED=0 go build -o /go/bin/app
+RUN CGO_ENABLED=0 go build -ldflags="-w -s" -o /go/bin/app
 
 
-FROM gcr.io/distroless/base-debian11
+FROM gcr.io/distroless/base-debian12
 
 COPY --from=build /go/bin/app ./app
-
-ENV TZ=America/Edmonton
 
 CMD ["./app"]
